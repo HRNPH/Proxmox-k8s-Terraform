@@ -2,9 +2,10 @@
 
 Madoka terraform is a Proxmox k8s terraform template for deploying a Kubernetes cluster on Proxmox using Ansible and Terraform.
 
-# Features
+# Features & What's Included
 
 - Automated deployment of a Kubernetes cluster on Proxmox using Terraform and Ansible.
+- microk8s for Kubernetes
 - Customize the number of nodes and their specifications.
 - the domain need to be configured in the code (intended)
 - Rancher included
@@ -28,6 +29,8 @@ Madoka terraform is a Proxmox k8s terraform template for deploying a Kubernetes 
 - Ansible 2.9 or later
 - SSH access to the Proxmox nodes
 - SSH key for Ansible access to the Proxmox nodes
+- Template VM with cloud-init
+- Tested on ubuntu 24.04 but it work with whatever version that got microk8s on snap --classic
 
 # Running the code
 
