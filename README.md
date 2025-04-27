@@ -224,3 +224,37 @@ sudo vim /etc/hosts # vim can be exited wit esc -> :q! (forced exit) or :wq (sav
 sudo dscacheutil -flushcache
 sudo killall -HUP mDNSResponder
 ```
+
+# 📂 Important File Overview
+
+This section explains the key files in this repository, what they do, and why they matter.  
+**If you're new to Terraform or Ansible**, read this carefully before editing!
+
+| File / Folder                | Purpose                                                                                                                                                                       |
+| :--------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `main.tf`                    | Defines the infrastructure Terraform will create: VMs for Kubernetes masters, workers, and the jumpbox.                                                                       |
+| `terraform.tfvars.example`   | A sample file showing what variables you need to define for Terraform (like your Proxmox login, cluster IPs, VM specs). Copy this to `terraform.tfvars` and edit your values. |
+| `inventory.ini`              | Ansible inventory file. Lists the IP addresses of all VMs and sets the SSH proxy (jumpbox) settings. Must match your Terraform IP plan.                                       |
+| `playbook.yml`               | Main Ansible playbook. Defines **step-by-step actions** like installing MicroK8s, setting up Rancher and ArgoCD. This controls the whole software configuration part.         |
+| `/plans/`                    | Folder where you store Terraform plan output files (like `terraform plan -out plans/1-init`). Helps you review and apply planned changes cleanly.                             |
+| `/roles/` (optional/empty)   | Not actively used after the recent update. Originally meant for modular Ansible roles like Rancher setup.                                                                     |
+| `README.md`                  | This guide you are reading. Describes the full process, structure, and important tips for operating or modifying the setup.                                                   |
+| `.terraform/` (auto-created) | Terraform internal cache and plugins folder. No need to edit manually. Can be deleted if you reset the project (`terraform init` will recreate it).                           |
+| `terraform.tfstate`          | Tracks what Terraform has created. **Don't edit manually!** Keep it safe. It represents your live cluster state.                                                              |
+
+---
+
+# 🛠️ How Files Connect Together
+
+```plaintext
+Terraform (.tf files)
+ └─> Proxmox: Create VMs
+     └─> VMs boot (cloud-init injects SSH keys)
+         └─> Ansible (inventory.ini + playbook.yml)
+             └─> Connects via jumpbox
+                 └─> Installs MicroK8s, Rancher, ArgoCD
+Network
+ └─> VMs communicate to each other via vmbr1 (cluster network)
+     └─> You Access via vmbr0 (home network) through master-1 static ip via configured DNS (local)
+        └─> k8s ingress resolved to services
+```
