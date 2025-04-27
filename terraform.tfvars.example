@@ -1,0 +1,16 @@
+# Used Shit
+pm_password    = "xxxxxx"
+template_id    = "xxxxxx" # ID should be a number
+target_node    = "xxxxxx"
+ssh_public_key = "xxxxxx" # can be generated with ssh-keygen -t rsa in case you don't have one
+
+# Cluster VMs configuration
+# note that if this was modified, the IPs should be updated in the inventory.ini file for ansible to work
+# Refer to the README.md for more details
+cluster_vms = [
+  { name = "master-1", ip = "192.168.3.11", cores = 2, memory = 4096, disk = 32 },
+  { name = "master-2", ip = "192.168.3.12", cores = 2, memory = 4096, disk = 32 },
+  { name = "worker-1", ip = "192.168.3.21", cores = 2, memory = 4096, disk = 32 },
+  { name = "worker-2", ip = "192.168.3.22", cores = 2, memory = 4096, disk = 32 },
+  { name = "worker-3", ip = "192.168.3.23", cores = 2, memory = 4096, disk = 32 },
+]

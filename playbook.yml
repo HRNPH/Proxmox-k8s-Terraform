@@ -1,0 +1,112 @@
+- hosts: all
+  become: true
+  tasks:
+    - name: Install MicroK8s
+      shell: sudo snap install microk8s --classic
+      args:
+        executable: /bin/bash
+
+    - name: Add madoka to MicroK8s group
+      shell: |
+        sudo usermod -a -G microk8s madoka
+        sudo mkdir -p /home/madoka/.kube
+        sudo chown -R madoka:madoka /home/madoka/.kube
+      args:
+        executable: /bin/bash
+
+- hosts: masters
+  become: true
+  tasks:
+    - name: Wait until MicroK8s is ready
+      shell: microk8s status --wait-ready
+      args:
+        executable: /bin/bash
+
+- hosts: masters[0]
+  become: true
+  tasks:
+    - name: Initialize MicroK8s HA cluster
+      shell: |
+        microk8s add-node --token-ttl 3600 --format short
+      args:
+        executable: /bin/bash
+      register: add_node_output
+
+    - set_fact:
+        join_command: "{{ add_node_output.stdout }}"
+
+- hosts: masters[1],workers
+  become: true
+  tasks:
+    - name: Join MicroK8s cluster
+      shell: "{{ hostvars['master-1'].join_command.split('\n')[0] }}"
+      args:
+        executable: /bin/bash
+      when: hostvars['master-1'].join_command is defined
+
+- hosts: masters[0]
+  become: true
+  tasks:
+    - name: Enable basic MicroK8s services
+      shell: |
+        microk8s enable dns storage
+      args:
+        executable: /bin/bash
+
+- hosts: masters[0]
+  become: true
+  tasks:
+    - name: Enable MicroK8s Ingress and Cert Manager
+      shell: |
+        microk8s enable ingress cert-manager
+      args:
+        executable: /bin/bash
+
+    - name: Add Rancher Helm repo
+      shell: |
+        microk8s helm3 repo add rancher-latest https://releases.rancher.com/server-charts/latest
+        microk8s helm3 repo update
+      args:
+        executable: /bin/bash
+
+    - name: Create namespace for Rancher
+      shell: |
+        microk8s kubectl create namespace cattle-system --dry-run=client -o yaml | microk8s kubectl apply -f -
+      args:
+        executable: /bin/bash
+
+    - name: Install Rancher using MicroK8s Helm3
+      shell: |
+        microk8s helm3 install rancher rancher-latest/rancher \
+          --namespace cattle-system \
+          --set hostname=rancher.madoka \
+          --set replicas=1 \
+          --set bootstrapPassword=admin
+      args:
+        executable: /bin/bash
+
+- hosts: masters[0]
+  become: true
+  tasks:
+    - name: Add ArgoCD Helm repo
+      shell: |
+        microk8s helm3 repo add argo https://argoproj.github.io/argo-helm
+        microk8s helm3 repo update
+      args:
+        executable: /bin/bash
+
+    - name: Create namespace for ArgoCD
+      shell: |
+        microk8s kubectl create namespace argocd --dry-run=client -o yaml | microk8s kubectl apply -f -
+      args:
+        executable: /bin/bash
+
+    - name: Install ArgoCD via Helm
+      shell: |
+        microk8s helm3 install argocd argo/argo-cd \
+          --namespace argocd \
+          --set server.service.type=LoadBalancer \
+          --set server.ingress.enabled=true \
+          --set server.ingress.hostname=argocd.madoka
+      args:
+        executable: /bin/bash
