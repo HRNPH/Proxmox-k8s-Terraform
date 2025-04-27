@@ -2,6 +2,17 @@
 
 Madoka terraform is a Proxmox k8s terraform template for deploying a Kubernetes cluster on Proxmox using Ansible and Terraform.
 
+# Features
+
+- Automated deployment of a Kubernetes cluster on Proxmox using Terraform and Ansible.
+- Customize the number of nodes and their specifications.
+- the domain need to be configured in the code (intended)
+- Rancher included
+- ArgoCD included
+- Delete what you don't need it was designed to be modified
+
+# Notes
+
 - This repository contains a Terraform module for deploying a Kubernetes cluster on Proxmox using Ansible.
 - The module uses Ansible to automate the installation and configuration of Kubernetes on the cluster nodes.
 - The module is designed to be used with Terraform to provision the infrastructure and Ansible to configure the software.
